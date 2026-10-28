@@ -116,12 +116,6 @@ def main():
     # commands (machine-readable command reference for LLM/agent use)
     sub.add_parser("commands", help="Print machine-readable command reference (JSON)", parents=[parent])
 
-    # ask (natural language via Claude)
-    p = sub.add_parser("ask", help="Natural language email task via Claude", parents=[parent])
-    p.add_argument("prompt", nargs="+", help="What you want to do with your email")
-    p.add_argument("--model", default="sonnet", help="Claude model (default: sonnet)")
-    p.add_argument("--dry-run", action="store_true", help="Show the prompt that would be sent")
-
     args = parser.parse_args()
 
     if not args.command:
@@ -443,69 +437,6 @@ def cmd_commands(args):
     output(ref)
 
 
-def _build_system_prompt():
-    """Build the system prompt for Claude, including tbcli reference."""
-    import subprocess
-    # Get the commands reference
-    result = subprocess.run(
-        [sys.executable, "-m", "tbcli", "commands"],
-        capture_output=True, text=True, encoding="utf-8", errors="replace"
-    )
-    commands_ref = result.stdout.strip()
-
-    return f"""You are an email assistant with access to Thunderbird mail via the tbcli CLI tool.
-You can run tbcli commands using bash to read, search, send, reply, organize, and manage email.
-
-Today's date: {__import__('datetime').date.today().isoformat()}
-
-## tbcli reference
-{commands_ref}
-
-## Guidelines
-- Always use tbcli commands via bash to interact with email. All output is JSON.
-- When listing messages, use appropriate filters (--after, --unread, --from, etc.) to be efficient.
-- When the user asks to "check email" or similar, default to today's unread messages.
-- Read message bodies with 'tbcli read ID' when you need content details.
-- For actions like send/reply/delete, confirm with the user before executing unless they were explicit.
-- Summarize results in natural language. Don't dump raw JSON at the user.
-- You can chain multiple tbcli commands to accomplish complex tasks.
-- NEVER use --body-file - for stdin piping. Always use --body "text" directly.
-"""
-
-
-def cmd_ask(args):
-    """Natural language email task via Claude."""
-    import subprocess
-    prompt = " ".join(args.prompt)
-    system = _build_system_prompt()
-
-    if args.dry_run:
-        print("=== SYSTEM PROMPT ===")
-        print(system)
-        print("\n=== USER PROMPT ===")
-        print(prompt)
-        return
-
-    import shutil
-
-    # Find claude binary (it's a .cmd on Windows, needs full path for subprocess)
-    claude_path = shutil.which("claude")
-    if not claude_path:
-        print("Error: 'claude' CLI not found. Install Claude Code: npm install -g @anthropic-ai/claude-code", file=sys.stderr)
-        sys.exit(1)
-
-    cmd = [
-        claude_path, "-p",
-        "--model", args.model,
-        "--allowedTools", "Bash",
-        "--append-system-prompt", system,
-    ]
-    env = os.environ.copy()
-    env.pop("CLAUDECODE", None)
-    proc = subprocess.run(cmd, input=prompt, env=env, encoding="utf-8", errors="replace")
-    sys.exit(proc.returncode)
-
-
 COMMANDS = {
     "status": cmd_status,
     "accounts": cmd_accounts,
@@ -524,5 +455,4 @@ COMMANDS = {
     "attachment": cmd_attachment,
     "setup": cmd_setup,
     "commands": cmd_commands,
-    "ask": cmd_ask,
 }

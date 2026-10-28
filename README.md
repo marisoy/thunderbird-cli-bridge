@@ -59,7 +59,7 @@ tbcli forward ID --to X                 tbcli move ID FOLDER
 tbcli delete ID [--permanent]           tbcli flag ID
 tbcli mark-read ID                      tbcli attachments ID
 tbcli attachment ID PART [-o DIR]       tbcli setup
-tbcli commands                          tbcli ask "..." [--model M] [--dry-run]
+tbcli commands
 ```
 
 Shared filters on `list` / `search`: `--unread`, `--flagged`, `--after YYYY-MM-DD`, `--before YYYY-MM-DD`, `--from`, `--to`, `--subject`, `--body` (server-side via Thunderbird's `messages.query`).
@@ -79,7 +79,6 @@ echo "body from stdin" | tbcli send --to x@example.com -s "hi" --body-file -
 Two commands lean into LLM/agent use:
 
 - **`tbcli commands`** emits a machine-readable JSON reference of the whole command tree (descriptions, options, return shapes, examples, workflow tips) — a self-describing contract an agent can read to learn the tool.
-- **`tbcli ask "..."`** is an experimental wrapper that hands that reference to the Claude Code CLI as a system prompt and lets it drive `tbcli` over Bash to satisfy a natural-language request. **Status: experimental** — it shells out to a locally installed `claude` binary; see **Status** below.
 
 ## Status (honest)
 
@@ -90,7 +89,6 @@ Two commands lean into LLM/agent use:
 | Attachments (list + download by part) | **Working** |
 | Server-side filtering via `messages.query` | **Working** |
 | `tbcli setup` host registration | **Working on Windows only** (registry via `winreg`); macOS/Linux path **not yet implemented** |
-| `tbcli ask` (NL via Claude Code) | **Experimental** — depends on a locally installed `claude` CLI; not part of the core bridge |
 | Tests | **None checked in** — verified by manual exercise against a live Thunderbird |
 | Packaging | Installable (`pip install -e .`), `tbcli` console-script entry point, v1.0.0 |
 
