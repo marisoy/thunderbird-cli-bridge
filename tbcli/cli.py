@@ -188,9 +188,25 @@ def cmd_list(args):
     output(data, args.pretty)
 
 
+def _clean_body(body, as_html):
+    """Return a model-friendly body. HTML is converted to plain text
+    (via html2text) unless --html is requested."""
+    if not body or as_html:
+        return body
+    if "<" not in body:
+        return body  # already plain text
+    import html2text
+    h = html2text.HTML2Text()
+    h.body_width = 0          # no line wrapping
+    h.ignore_images = True
+    h.ignore_emphasis = False
+    return h.handle(body).strip()
+
+
 def cmd_read(args):
     fmt = "html" if args.html else "text"
     data = send_command("read", {"id": args.id, "format": fmt})
+    data["body"] = _clean_body(data.get("body", ""), args.html)
     if args.pretty:
         print(f"From:    {data['from']}")
         print(f"To:      {', '.join(data['to']) if data['to'] else ''}")

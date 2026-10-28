@@ -1,7 +1,7 @@
 {
   "name": "tbcli_host",
   "description": "tbcli native messaging host",
-  "path": "REPLACE_ME_RUN_tbcli_setup",
+  "path": "C:\\GitHub\\thunderbird-cli-bridge\\native-host\\tbcli_host.bat",
   "type": "stdio",
   "allowed_extensions": [
     "tbcli-bridge@localhost"
